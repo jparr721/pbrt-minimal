@@ -18,7 +18,6 @@
 #include <pbrt/util/colorspace.h>
 #include <pbrt/util/display.h>
 #include <pbrt/util/file.h>
-#include <pbrt/util/gui.h>
 #include <pbrt/util/image.h>
 #include <pbrt/util/log.h>
 #include <pbrt/util/print.h>
@@ -288,208 +287,221 @@ WavefrontPathIntegrator::WavefrontPathIntegrator(
 
 // WavefrontPathIntegrator Method Definitions
 Float WavefrontPathIntegrator::Render() {
-    Bounds2i pixelBounds = film.PixelBounds();
-    Vector2i resolution = pixelBounds.Diagonal();
+    //     Bounds2i pixelBounds = film.PixelBounds();
+    //     Vector2i resolution = pixelBounds.Diagonal();
 
-    GUI *gui = nullptr;
-    // FIXME: camera animation; whatever...
-    Transform renderFromCamera =
-        camera.GetCameraTransform().RenderFromCamera().startTransform;
-    Transform cameraFromRender = Inverse(renderFromCamera);
-    Transform cameraFromWorld =
-        camera.GetCameraTransform().CameraFromWorld(camera.SampleTime(0.f));
-    if (Options->interactive) {
-        if (!Options->displayServer.empty())
-            ErrorExit(
-                "--interactive and --display-server cannot be used at the same time.");
-        gui = new GUI(film.GetFilename(), resolution, aggregate->Bounds());
-    }
+    //     GUI *gui = nullptr;
+    //     // FIXME: camera animation; whatever...
+    //     Transform renderFromCamera =
+    //         camera.GetCameraTransform().RenderFromCamera().startTransform;
+    //     Transform cameraFromRender = Inverse(renderFromCamera);
+    //     Transform cameraFromWorld =
+    //         camera.GetCameraTransform().CameraFromWorld(camera.SampleTime(0.f));
+    //     if (Options->interactive) {
+    //         if (!Options->displayServer.empty())
+    //             ErrorExit(
+    //                 "--interactive and --display-server cannot be used at the same
+    //                 time.");
+    //         gui = new GUI(film.GetFilename(), resolution, aggregate->Bounds());
+    //     }
 
-    Timer timer;
-    // Prefetch allocations to GPU memory
-#ifdef PBRT_BUILD_GPU_RENDERER
-    if (Options->useGPU)
-        PrefetchGPUAllocations();
-#endif  // PBRT_BUILD_GPU_RENDERER
+    //     Timer timer;
+    //     // Prefetch allocations to GPU memory
+    // #ifdef PBRT_BUILD_GPU_RENDERER
+    //     if (Options->useGPU)
+    //         PrefetchGPUAllocations();
+    // #endif  // PBRT_BUILD_GPU_RENDERER
 
-    // Launch thread to copy image for display server, if enabled
-    if (!Options->displayServer.empty())
-        StartDisplayThread();
+    //     // Launch thread to copy image for display server, if enabled
+    //     if (!Options->displayServer.empty())
+    //         StartDisplayThread();
 
-    // Loop over sample indices and evaluate pixel samples
-    int firstSampleIndex = 0, lastSampleIndex = samplesPerPixel;
-    // Update sample index range based on debug start, if provided
-    if (!Options->debugStart.empty()) {
-        std::vector<int> values = SplitStringToInts(Options->debugStart, ',');
-        if (values.size() != 1 && values.size() != 2)
-            ErrorExit("Expected either one or two integer values for --debugstart.");
+    //     // Loop over sample indices and evaluate pixel samples
+    //     int firstSampleIndex = 0, lastSampleIndex = samplesPerPixel;
+    //     // Update sample index range based on debug start, if provided
+    //     if (!Options->debugStart.empty()) {
+    //         std::vector<int> values = SplitStringToInts(Options->debugStart, ',');
+    //         if (values.size() != 1 && values.size() != 2)
+    //             ErrorExit("Expected either one or two integer values for
+    //             --debugstart.");
 
-        firstSampleIndex = values[0];
-        if (values.size() == 2)
-            lastSampleIndex = firstSampleIndex + values[1];
-        else
-            lastSampleIndex = firstSampleIndex + 1;
-    }
+    //         firstSampleIndex = values[0];
+    //         if (values.size() == 2)
+    //             lastSampleIndex = firstSampleIndex + values[1];
+    //         else
+    //             lastSampleIndex = firstSampleIndex + 1;
+    //     }
 
-    ProgressReporter progress(lastSampleIndex - firstSampleIndex, "Rendering",
-                              Options->quiet || Options->interactive, Options->useGPU);
-    for (int sampleIndex = firstSampleIndex; sampleIndex < lastSampleIndex || gui;
-         ++sampleIndex) {
-        // Attempt to work around issue #145.
-#if !(defined(PBRT_IS_WINDOWS) && defined(PBRT_BUILD_GPU_RENDERER) && \
-      __CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ == 1)
-        CheckCallbackScope _([&]() {
-            return StringPrintf("Wavefront rendering failed at sample %d. Debug with "
-                                "\"--debugstart %d\"\n",
-                                sampleIndex, sampleIndex);
-        });
-#endif
+    //     ProgressReporter progress(lastSampleIndex - firstSampleIndex, "Rendering",
+    //                               Options->quiet || Options->interactive,
+    //                               Options->useGPU);
+    //     for (int sampleIndex = firstSampleIndex; sampleIndex < lastSampleIndex || gui;
+    //          ++sampleIndex) {
+    //         // Attempt to work around issue #145.
+    // #if !(defined(PBRT_IS_WINDOWS) && defined(PBRT_BUILD_GPU_RENDERER) && \
+//       __CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ == 1)
+    //         CheckCallbackScope _([&]() {
+    //             return StringPrintf("Wavefront rendering failed at sample %d. Debug
+    //             with "
+    //                                 "\"--debugstart %d\"\n",
+    //                                 sampleIndex, sampleIndex);
+    //         });
+    // #endif
 
-        // Keep running the outer for loop but don't take more samples if
-        // the GUI is being used so that the user can move the camera, etc.
-        if (sampleIndex < lastSampleIndex) {
-            // Render image for sample _sampleIndex_
-            LOG_VERBOSE("Starting to submit work for sample %d", sampleIndex);
-            for (int y0 = pixelBounds.pMin.y; y0 < pixelBounds.pMax.y;
-                 y0 += scanlinesPerPass) {
-                // Generate camera rays for current scanline range
-                RayQueue *cameraRayQueue = CurrentRayQueue(0);
-                Do(
-                   "Reset ray queue", PBRT_CPU_GPU_LAMBDA() {
-                       PBRT_DBG("Starting scanlines at y0 = %d, sample %d / %d\n", y0,
-                                sampleIndex, samplesPerPixel);
-                       cameraRayQueue->Reset();
-                   });
+    //         // Keep running the outer for loop but don't take more samples if
+    //         // the GUI is being used so that the user can move the camera, etc.
+    //         if (sampleIndex < lastSampleIndex) {
+    //             // Render image for sample _sampleIndex_
+    //             LOG_VERBOSE("Starting to submit work for sample %d", sampleIndex);
+    //             for (int y0 = pixelBounds.pMin.y; y0 < pixelBounds.pMax.y;
+    //                  y0 += scanlinesPerPass) {
+    //                 // Generate camera rays for current scanline range
+    //                 RayQueue *cameraRayQueue = CurrentRayQueue(0);
+    //                 Do(
+    //                    "Reset ray queue", PBRT_CPU_GPU_LAMBDA() {
+    //                        PBRT_DBG("Starting scanlines at y0 = %d, sample %d / %d\n",
+    //                        y0,
+    //                                 sampleIndex, samplesPerPixel);
+    //                        cameraRayQueue->Reset();
+    //                    });
 
-                Transform cameraMotion;
-                if (gui)
-                    cameraMotion =
-                        renderFromCamera * gui->GetCameraTransform() * cameraFromRender;
-                GenerateCameraRays(y0, cameraMotion, sampleIndex);
-                Do(
-                   "Update camera ray stats",
-                   PBRT_CPU_GPU_LAMBDA() { stats->cameraRays += cameraRayQueue->Size(); });
+    //                 Transform cameraMotion;
+    //                 if (gui)
+    //                     cameraMotion =
+    //                         renderFromCamera * gui->GetCameraTransform() *
+    //                         cameraFromRender;
+    //                 GenerateCameraRays(y0, cameraMotion, sampleIndex);
+    //                 Do(
+    //                    "Update camera ray stats",
+    //                    PBRT_CPU_GPU_LAMBDA() { stats->cameraRays +=
+    //                    cameraRayQueue->Size(); });
 
-                // Trace rays and estimate radiance up to maximum ray depth
-                for (int wavefrontDepth = 0; true; ++wavefrontDepth) {
-                    // Reset queues before tracing rays
-                    RayQueue *nextQueue = NextRayQueue(wavefrontDepth);
-                    Do(
-                       "Reset queues before tracing rays", PBRT_CPU_GPU_LAMBDA() {
-                           nextQueue->Reset();
-                           // Reset queues before tracing next batch of rays
-                           if (mediumSampleQueue)
-                               mediumSampleQueue->Reset();
-                           if (mediumScatterQueue)
-                               mediumScatterQueue->Reset();
+    //                 // Trace rays and estimate radiance up to maximum ray depth
+    //                 for (int wavefrontDepth = 0; true; ++wavefrontDepth) {
+    //                     // Reset queues before tracing rays
+    //                     RayQueue *nextQueue = NextRayQueue(wavefrontDepth);
+    //                     Do(
+    //                        "Reset queues before tracing rays", PBRT_CPU_GPU_LAMBDA() {
+    //                            nextQueue->Reset();
+    //                            // Reset queues before tracing next batch of rays
+    //                            if (mediumSampleQueue)
+    //                                mediumSampleQueue->Reset();
+    //                            if (mediumScatterQueue)
+    //                                mediumScatterQueue->Reset();
 
-                           if (escapedRayQueue)
-                               escapedRayQueue->Reset();
-                           hitAreaLightQueue->Reset();
+    //                            if (escapedRayQueue)
+    //                                escapedRayQueue->Reset();
+    //                            hitAreaLightQueue->Reset();
 
-                           basicEvalMaterialQueue->Reset();
-                           universalEvalMaterialQueue->Reset();
+    //                            basicEvalMaterialQueue->Reset();
+    //                            universalEvalMaterialQueue->Reset();
 
-                           if (bssrdfEvalQueue)
-                               bssrdfEvalQueue->Reset();
-                           if (subsurfaceScatterQueue)
-                               subsurfaceScatterQueue->Reset();
-                       });
+    //                            if (bssrdfEvalQueue)
+    //                                bssrdfEvalQueue->Reset();
+    //                            if (subsurfaceScatterQueue)
+    //                                subsurfaceScatterQueue->Reset();
+    //                        });
 
-                    // Follow active ray paths and accumulate radiance estimates
-                    GenerateRaySamples(wavefrontDepth, sampleIndex);
+    //                     // Follow active ray paths and accumulate radiance estimates
+    //                     GenerateRaySamples(wavefrontDepth, sampleIndex);
 
-                    // Find closest intersections along active rays
-                    aggregate->IntersectClosest(
-                                                maxQueueSize, CurrentRayQueue(wavefrontDepth), escapedRayQueue,
-                                                hitAreaLightQueue, basicEvalMaterialQueue, universalEvalMaterialQueue,
-                                                mediumSampleQueue, NextRayQueue(wavefrontDepth));
+    //                     // Find closest intersections along active rays
+    //                     aggregate->IntersectClosest(
+    //                                                 maxQueueSize,
+    //                                                 CurrentRayQueue(wavefrontDepth),
+    //                                                 escapedRayQueue, hitAreaLightQueue,
+    //                                                 basicEvalMaterialQueue,
+    //                                                 universalEvalMaterialQueue,
+    //                                                 mediumSampleQueue,
+    //                                                 NextRayQueue(wavefrontDepth));
 
-                    if (wavefrontDepth > 0) {
-                        // As above, with the indexing...
-                        RayQueue *statsQueue = CurrentRayQueue(wavefrontDepth);
-                        Do(
-                           "Update indirect ray stats", PBRT_CPU_GPU_LAMBDA() {
-                               stats->indirectRays[wavefrontDepth] += statsQueue->Size();
-                           });
-                    }
+    //                     if (wavefrontDepth > 0) {
+    //                         // As above, with the indexing...
+    //                         RayQueue *statsQueue = CurrentRayQueue(wavefrontDepth);
+    //                         Do(
+    //                            "Update indirect ray stats", PBRT_CPU_GPU_LAMBDA() {
+    //                                stats->indirectRays[wavefrontDepth] +=
+    //                                statsQueue->Size();
+    //                            });
+    //                     }
 
-                    SampleMediumInteraction(wavefrontDepth);
+    //                     SampleMediumInteraction(wavefrontDepth);
 
-                    HandleEscapedRays();
+    //                     HandleEscapedRays();
 
-                    HandleEmissiveIntersection();
+    //                     HandleEmissiveIntersection();
 
-                    if (wavefrontDepth == maxDepth)
-                        break;
+    //                     if (wavefrontDepth == maxDepth)
+    //                         break;
 
-                    EvaluateMaterialsAndBSDFs(wavefrontDepth, cameraMotion);
+    //                     EvaluateMaterialsAndBSDFs(wavefrontDepth, cameraMotion);
 
-                    // Do immediately so that we have space for shadow rays for subsurface..
-                    TraceShadowRays(wavefrontDepth);
+    //                     // Do immediately so that we have space for shadow rays for
+    //                     subsurface.. TraceShadowRays(wavefrontDepth);
 
-                    SampleSubsurface(wavefrontDepth);
-                }
+    //                     SampleSubsurface(wavefrontDepth);
+    //                 }
 
-                UpdateFilm();
-            }
+    //                 UpdateFilm();
+    //             }
 
-            // Copy updated film pixels to buffer for the display server.
-            if (Options->useGPU && !Options->displayServer.empty())
-                UpdateDisplayRGBFromFilm(pixelBounds);
+    //             // Copy updated film pixels to buffer for the display server.
+    //             if (Options->useGPU && !Options->displayServer.empty())
+    //                 UpdateDisplayRGBFromFilm(pixelBounds);
 
-            progress.Update();
-        }
+    //             progress.Update();
+    //         }
 
-        if (gui) {
-            RGB *rgb = gui->MapFramebuffer();
-            UpdateFramebufferFromFilm(pixelBounds, gui->exposure, rgb);
-            gui->UnmapFramebuffer();
+    //         if (gui) {
+    //             RGB *rgb = gui->MapFramebuffer();
+    //             UpdateFramebufferFromFilm(pixelBounds, gui->exposure, rgb);
+    //             gui->UnmapFramebuffer();
 
-            if (gui->printCameraTransform) {
-                SquareMatrix<4> cfw =
-                    (Inverse(gui->GetCameraTransform()) * cameraFromWorld).GetMatrix();
-                Printf("Current camera transform:\nTransform [ ");
-                for (int i = 0; i < 16; ++i)
-                    Printf("%f ", cfw[i % 4][i / 4]);
-                Printf("]\n");
-                std::fflush(stdout);
-                gui->printCameraTransform = false;
-            }
+    //             if (gui->printCameraTransform) {
+    //                 SquareMatrix<4> cfw =
+    //                     (Inverse(gui->GetCameraTransform()) *
+    //                     cameraFromWorld).GetMatrix();
+    //                 Printf("Current camera transform:\nTransform [ ");
+    //                 for (int i = 0; i < 16; ++i)
+    //                     Printf("%f ", cfw[i % 4][i / 4]);
+    //                 Printf("]\n");
+    //                 std::fflush(stdout);
+    //                 gui->printCameraTransform = false;
+    //             }
 
-            DisplayState state = gui->RefreshDisplay();
-            if (state == DisplayState::EXIT)
-                break;
-            else if (state == DisplayState::RESET) {
-                sampleIndex = firstSampleIndex - 1;
-                ParallelFor(
-                    "Reset pixels", resolution.x * resolution.y,
-                    PBRT_CPU_GPU_LAMBDA(int i) {
-                        int x = i % resolution.x, y = i / resolution.x;
-                        film.ResetPixel(pixelBounds.pMin + Vector2i(x, y));
-                    });
-            }
-        }
+    //             DisplayState state = gui->RefreshDisplay();
+    //             if (state == DisplayState::EXIT)
+    //                 break;
+    //             else if (state == DisplayState::RESET) {
+    //                 sampleIndex = firstSampleIndex - 1;
+    //                 ParallelFor(
+    //                     "Reset pixels", resolution.x * resolution.y,
+    //                     PBRT_CPU_GPU_LAMBDA(int i) {
+    //                         int x = i % resolution.x, y = i / resolution.x;
+    //                         film.ResetPixel(pixelBounds.pMin + Vector2i(x, y));
+    //                     });
+    //             }
+    //         }
 
-    }
+    //     }
 
-    if (gui) {
-        delete gui;
-        gui = nullptr;
-    }
+    //     if (gui) {
+    //         delete gui;
+    //         gui = nullptr;
+    //     }
 
-    progress.Done();
+    //     progress.Done();
 
-#ifdef PBRT_BUILD_GPU_RENDERER
-    if (Options->useGPU)
-        GPUWait();
-#endif  // PBRT_BUILD_GPU_RENDERER
-    Float seconds = timer.ElapsedSeconds();
+    // #ifdef PBRT_BUILD_GPU_RENDERER
+    //     if (Options->useGPU)
+    //         GPUWait();
+    // #endif  // PBRT_BUILD_GPU_RENDERER
+    //     Float seconds = timer.ElapsedSeconds();
 
-    // Shut down display server thread, if active
-    StopDisplayThread();
+    //     // Shut down display server thread, if active
+    //     StopDisplayThread();
 
-    return seconds;
+    return 0.0;
 }
 
 void WavefrontPathIntegrator::HandleEscapedRays() {
@@ -503,14 +515,13 @@ void WavefrontPathIntegrator::HandleEscapedRays() {
             for (const auto &light : *infiniteLights) {
                 if (SampledSpectrum Le = light.Le(Ray(w.rayo, w.rayd), w.lambda); Le) {
                     // Compute path radiance contribution from infinite light
-                    PBRT_DBG("L %f %f %f %f beta %f %f %f %f Le %f %f %f %f\n", L[0], L[1],
-                             L[2], L[3], w.beta[0], w.beta[1], w.beta[2], w.beta[3],
+                    PBRT_DBG("L %f %f %f %f beta %f %f %f %f Le %f %f %f %f\n", L[0],
+                             L[1], L[2], L[3], w.beta[0], w.beta[1], w.beta[2], w.beta[3],
                              Le[0], Le[1], Le[2], Le[3]);
                     PBRT_DBG("depth %d specularBounce %d pdf uni %f %f %f %f "
                              "pdf nee %f %f %f %f\n",
-                             w.depth, w.specularBounce,
-                             w.r_u[0], w.r_u[1], w.r_u[2], w.r_u[3],
-                             w.r_l[0], w.r_l[1], w.r_l[2], w.r_l[3]);
+                             w.depth, w.specularBounce, w.r_u[0], w.r_u[1], w.r_u[2],
+                             w.r_u[3], w.r_l[0], w.r_l[1], w.r_l[2], w.r_l[3]);
 
                     if (w.depth == 0 || w.specularBounce) {
                         L += w.beta * Le / w.r_u.Average();

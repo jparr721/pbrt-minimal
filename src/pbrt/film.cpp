@@ -19,7 +19,6 @@
 #include <pbrt/util/colorspace.h>
 #include <pbrt/util/error.h>
 #include <pbrt/util/file.h>
-#include <pbrt/util/gui.h>
 #include <pbrt/util/image.h>
 #include <pbrt/util/lowdiscrepancy.h>
 #include <pbrt/util/memory.h>
@@ -80,7 +79,7 @@ FilmBaseParameters::FilmBaseParameters(const ParameterDictionary &parameters,
         filename = "pbrt.exr";
 
     if (Options->fullscreen) {
-        fullResolution = GUI::GetResolution();
+        // fullResolution = GUI::GetResolution();
 
         // Omit unused parameter error
         auto unusedX = parameters.GetOneInt("xresolution", 1280);

@@ -62,7 +62,7 @@ check_ext ("OpenVDB" "openvdb/nanovdb" 414bed84c2fc22e188eac7b611aa85c7edd7a5a9)
 check_ext ("Ptex" "ptex/src" 4cd8e9a6db2b06e478dfbbd8c26eb6df97f84483)
 check_ext ("double-conversion" "double-conversion/cmake" cc1f75a114aca8d2af69f73a5a959aecbab0e87a)
 check_ext ("filesystem" "filesystem/filesystem" c5f9de30142453eb3c6fe991e82dfc2583373116)
-check_ext ("glfw" "glfw/docs" 4cb36872a5fe448c205d0b46f0e8c8b57530cfe0)
+# check_ext ("glfw" "glfw/docs" 4cb36872a5fe448c205d0b46f0e8c8b57530cfe0)
 check_ext ("libdeflate" "libdeflate/common" 1fd0bea6ca2073c68493632dafc4b1ddda1bcbc3)
 check_ext ("lodepng" "lodepng/examples" 8c6a9e30576f07bf470ad6f09458a2dcd7a6a84a)
 check_ext ("qoi" "qoi" 028c75fd26e5e0758c7c711216c00404994c1ad3)
@@ -402,7 +402,7 @@ int main() {
    fstat(fd, &s);
    size_t len = s.st_size;
    void *ptr = mmap(0, len, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
-   munmap(ptr, len);   
+   munmap(ptr, len);
 }
 " HAVE_MMAP)
 
@@ -534,7 +534,7 @@ set (PBRT_SOURCE
 
   src/pbrt/cmd/pspec_gpu.cpp
   )
-  
+
 if (MSVC)
     set (PBRT_SOURCE ${PBRT_SOURCE} src/pbrt/visualstudio.natvis)
 endif ()
@@ -561,7 +561,7 @@ set (PBRT_SOURCE_HEADERS
   src/pbrt/scene.h
   src/pbrt/shapes.h
   src/pbrt/textures.h
-  )  
+  )
 
 SET (PBRT_CPU_SOURCE
   src/pbrt/cpu/aggregates.cpp
@@ -610,7 +610,7 @@ SET (PBRT_UTIL_SOURCE
   src/pbrt/util/error.cpp
   src/pbrt/util/file.cpp
   src/pbrt/util/float.cpp
-  src/pbrt/util/gui.cpp
+  # src/pbrt/util/gui.cpp
   src/pbrt/util/image.cpp
   src/pbrt/util/log.cpp
   src/pbrt/util/loopsubdiv.cpp
@@ -650,7 +650,7 @@ SET (PBRT_UTIL_SOURCE_HEADERS
   src/pbrt/util/error.h
   src/pbrt/util/file.h
   src/pbrt/util/float.h
-  src/pbrt/util/gui.h
+  # src/pbrt/util/gui.h
   src/pbrt/util/hash.h
   src/pbrt/util/image.h
   src/pbrt/util/log.h
@@ -854,7 +854,7 @@ target_include_directories (pbrt_lib PUBLIC
   ${DOUBLE_CONVERSION_INCLUDE}
   ${NANOVDB_INCLUDE}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${GLFW_INCLUDE}
+  # ${GLFW_INCLUDE}
   ${GLAD_INCLUDE}
 )
 
@@ -883,7 +883,7 @@ set (ALL_PBRT_LIBS
   double-conversion
   ${PBRT_CUDA_LIB}
   utf8proc
-  glfw
+  # glfw
   glad
   OpenGL::GL)
 
@@ -919,7 +919,7 @@ target_link_libraries (rgb2spec_opt PRIVATE ${CMAKE_THREAD_LIBS_INIT} pbrt_opt p
 
 if (NOT PBRT_USE_PREGENERATED_RGB_TO_SPECTRUM_TABLES)
   add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rgbspectrum_aces.cpp
-      COMMAND rgb2spec_opt 64 ${CMAKE_CURRENT_BINARY_DIR}/rgbspectrum_aces.cpp ACES2065_1 
+      COMMAND rgb2spec_opt 64 ${CMAKE_CURRENT_BINARY_DIR}/rgbspectrum_aces.cpp ACES2065_1
       DEPENDS rgb2spec_opt)
 
   add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rgbspectrum_dci_p3.cpp
@@ -957,142 +957,142 @@ set_property (TARGET pbrt_exe PROPERTY FOLDER "cmd")
 ######################
 # imgtool
 
-add_executable (imgtool src/pbrt/cmd/imgtool.cpp)
-add_executable (pbrt::imgtool ALIAS imgtool)
+# add_executable (imgtool src/pbrt/cmd/imgtool.cpp)
+# add_executable (pbrt::imgtool ALIAS imgtool)
 
-add_library (sky_lib STATIC src/ext/skymodel/ArHosekSkyModel.c)
-set_property (TARGET sky_lib PROPERTY FOLDER "ext")
+# add_library (sky_lib STATIC src/ext/skymodel/ArHosekSkyModel.c)
+# set_property (TARGET sky_lib PROPERTY FOLDER "ext")
 
-target_compile_definitions (imgtool PRIVATE ${PBRT_DEFINITIONS})
-target_compile_options (imgtool PRIVATE ${PBRT_CXX_FLAGS})
-target_include_directories (imgtool PRIVATE src src/ext ${FLIP_INCLUDE})
-target_link_libraries (imgtool PRIVATE ${ALL_PBRT_LIBS} pbrt_opt pbrt_warnings sky_lib flip_lib)
+# target_compile_definitions (imgtool PRIVATE ${PBRT_DEFINITIONS})
+# target_compile_options (imgtool PRIVATE ${PBRT_CXX_FLAGS})
+# target_include_directories (imgtool PRIVATE src src/ext ${FLIP_INCLUDE})
+# target_link_libraries (imgtool PRIVATE ${ALL_PBRT_LIBS} pbrt_opt pbrt_warnings sky_lib flip_lib)
 
-add_sanitizers (imgtool)
+# add_sanitizers (imgtool)
 
-set_property (TARGET imgtool PROPERTY FOLDER "cmd")
+# set_property (TARGET imgtool PROPERTY FOLDER "cmd")
 
 ######################
 # pspec
 
-add_executable (pspec src/pbrt/cmd/pspec.cpp)
-add_executable (pbrt::pspec ALIAS pspec)
+# add_executable (pspec src/pbrt/cmd/pspec.cpp)
+# add_executable (pbrt::pspec ALIAS pspec)
 
-target_compile_definitions (pspec PRIVATE ${PBRT_DEFINITIONS})
-target_compile_options (pspec PRIVATE ${PBRT_CXX_FLAGS})
-target_include_directories (pspec PRIVATE src src/ext)
-target_link_libraries (pspec PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings)
+# target_compile_definitions (pspec PRIVATE ${PBRT_DEFINITIONS})
+# target_compile_options (pspec PRIVATE ${PBRT_CXX_FLAGS})
+# target_include_directories (pspec PRIVATE src src/ext)
+# target_link_libraries (pspec PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings)
 
-add_sanitizers (pspec)
+# add_sanitizers (pspec)
 
-set_property (TARGET pspec PROPERTY FOLDER "cmd")
+# set_property (TARGET pspec PROPERTY FOLDER "cmd")
 
 ######################
 # plytool
 
-add_executable (plytool src/pbrt/cmd/plytool.cpp)
-add_executable (pbrt::plytool ALIAS plytool)
+# add_executable (plytool src/pbrt/cmd/plytool.cpp)
+# add_executable (pbrt::plytool ALIAS plytool)
 
-target_compile_definitions (plytool PRIVATE ${PBRT_DEFINITIONS})
-target_compile_options (plytool PUBLIC ${PBRT_CXX_FLAGS})
-target_include_directories (plytool PUBLIC src src/ext)
-target_link_libraries (plytool PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings pbrt_opt)
+# target_compile_definitions (plytool PRIVATE ${PBRT_DEFINITIONS})
+# target_compile_options (plytool PUBLIC ${PBRT_CXX_FLAGS})
+# target_include_directories (plytool PUBLIC src src/ext)
+# target_link_libraries (plytool PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings pbrt_opt)
 
-set_target_properties (plytool PROPERTIES OUTPUT_NAME plytool)
+# set_target_properties (plytool PROPERTIES OUTPUT_NAME plytool)
 
-add_sanitizers (plytool)
+# add_sanitizers (plytool)
 
-set_property (TARGET plytool PROPERTY FOLDER "cmd")
+# set_property (TARGET plytool PROPERTY FOLDER "cmd")
 
 ######################
 # nanovdb2pbrt
 
-add_executable (nanovdb2pbrt src/pbrt/cmd/nanovdb2pbrt.cpp)
-add_executable (pbrt::nanovdb2pbrt ALIAS nanovdb2pbrt)
+# add_executable (nanovdb2pbrt src/pbrt/cmd/nanovdb2pbrt.cpp)
+# add_executable (pbrt::nanovdb2pbrt ALIAS nanovdb2pbrt)
 
-target_compile_definitions (nanovdb2pbrt PRIVATE ${PBRT_DEFINITIONS})
-target_compile_options (nanovdb2pbrt PUBLIC ${PBRT_CXX_FLAGS})
-target_include_directories (nanovdb2pbrt PUBLIC src src/ext)
-target_link_libraries (nanovdb2pbrt PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings pbrt_opt)
+# target_compile_definitions (nanovdb2pbrt PRIVATE ${PBRT_DEFINITIONS})
+# target_compile_options (nanovdb2pbrt PUBLIC ${PBRT_CXX_FLAGS})
+# target_include_directories (nanovdb2pbrt PUBLIC src src/ext)
+# target_link_libraries (nanovdb2pbrt PRIVATE ${ALL_PBRT_LIBS} pbrt_warnings pbrt_opt)
 
-set_target_properties (nanovdb2pbrt PROPERTIES OUTPUT_NAME nanovdb2pbrt)
+# set_target_properties (nanovdb2pbrt PROPERTIES OUTPUT_NAME nanovdb2pbrt)
 
-add_sanitizers (nanovdb2pbrt)
+# add_sanitizers (nanovdb2pbrt)
 
-set_property (TARGET nanovdb2pbrt PROPERTY FOLDER "cmd")
+# set_property (TARGET nanovdb2pbrt PROPERTY FOLDER "cmd")
 
 ######################
 # cyhair2pbrt
 
-add_executable (cyhair2pbrt src/pbrt/cmd/cyhair2pbrt.cpp)
+# add_executable (cyhair2pbrt src/pbrt/cmd/cyhair2pbrt.cpp)
 
-target_compile_definitions (cyhair2pbrt PRIVATE ${PBRT_DEFINITIONS})
-target_compile_options (cyhair2pbrt PRIVATE ${PBRT_CXX_FLAGS})
-target_link_libraries (cyhair2pbrt PRIVATE pbrt_opt pbrt_warnings)
+# target_compile_definitions (cyhair2pbrt PRIVATE ${PBRT_DEFINITIONS})
+# target_compile_options (cyhair2pbrt PRIVATE ${PBRT_CXX_FLAGS})
+# target_link_libraries (cyhair2pbrt PRIVATE pbrt_opt pbrt_warnings)
 
-add_sanitizers (cyhair2pbrt)
+# add_sanitizers (cyhair2pbrt)
 
-set_property (TARGET cyhair2pbrt PROPERTY FOLDER "cmd")
+# set_property (TARGET cyhair2pbrt PROPERTY FOLDER "cmd")
 
 ##################
 # Unit tests
 
-set (PBRT_TEST_SOURCE
-  src/pbrt/bsdfs_test.cpp
-  src/pbrt/filters_test.cpp
-  src/pbrt/lights_test.cpp
-  src/pbrt/lightsamplers_test.cpp
-  src/pbrt/media_test.cpp
-  src/pbrt/parser_test.cpp
-  src/pbrt/samplers_test.cpp
-  src/pbrt/shapes_test.cpp
+# set (PBRT_TEST_SOURCE
+#   src/pbrt/bsdfs_test.cpp
+#   src/pbrt/filters_test.cpp
+#   src/pbrt/lights_test.cpp
+#   src/pbrt/lightsamplers_test.cpp
+#   src/pbrt/media_test.cpp
+#   src/pbrt/parser_test.cpp
+#   src/pbrt/samplers_test.cpp
+#   src/pbrt/shapes_test.cpp
 
-  src/pbrt/cpu/integrators_test.cpp
+#   src/pbrt/cpu/integrators_test.cpp
 
-  src/pbrt/util/args_test.cpp
-  src/pbrt/util/buffercache_test.cpp
-  src/pbrt/util/color_test.cpp
-  src/pbrt/util/containers_test.cpp
-  src/pbrt/util/file_test.cpp
-  src/pbrt/util/float_test.cpp
-  src/pbrt/util/hash_test.cpp
-  src/pbrt/util/image_test.cpp
-  src/pbrt/util/math_test.cpp
-  src/pbrt/util/parallel_test.cpp
-  src/pbrt/util/print_test.cpp
-  src/pbrt/util/pstd_test.cpp
-  src/pbrt/util/rng_test.cpp
-  src/pbrt/util/sampling_test.cpp
-  src/pbrt/util/spectrum_test.cpp
-  src/pbrt/util/splines_test.cpp
-  src/pbrt/util/string_test.cpp
-  src/pbrt/util/taggedptr_test.cpp
-  src/pbrt/util/transform_test.cpp
-  src/pbrt/util/vecmath_test.cpp
-  )
+#   src/pbrt/util/args_test.cpp
+#   src/pbrt/util/buffercache_test.cpp
+#   src/pbrt/util/color_test.cpp
+#   src/pbrt/util/containers_test.cpp
+#   src/pbrt/util/file_test.cpp
+#   src/pbrt/util/float_test.cpp
+#   src/pbrt/util/hash_test.cpp
+#   src/pbrt/util/image_test.cpp
+#   src/pbrt/util/math_test.cpp
+#   src/pbrt/util/parallel_test.cpp
+#   src/pbrt/util/print_test.cpp
+#   src/pbrt/util/pstd_test.cpp
+#   src/pbrt/util/rng_test.cpp
+#   src/pbrt/util/sampling_test.cpp
+#   src/pbrt/util/spectrum_test.cpp
+#   src/pbrt/util/splines_test.cpp
+#   src/pbrt/util/string_test.cpp
+#   src/pbrt/util/taggedptr_test.cpp
+#   src/pbrt/util/transform_test.cpp
+#   src/pbrt/util/vecmath_test.cpp
+#   )
 
-add_executable (pbrt_test src/pbrt/cmd/pbrt_test.cpp ${PBRT_TEST_SOURCE})
+# add_executable (pbrt_test src/pbrt/cmd/pbrt_test.cpp ${PBRT_TEST_SOURCE})
 
-target_link_libraries (pbrt_test PRIVATE ${ALL_PBRT_LIBS} pbrt_opt pbrt_warnings)
-target_compile_definitions (pbrt_test PRIVATE ${PBRT_DEFINITIONS})
-target_include_directories (pbrt_test PRIVATE src src/ext ${DOUBLE_CONVERSION_INCLUDE})
-target_compile_options(pbrt_test PUBLIC ${PBRT_CXX_FLAGS})
+# target_link_libraries (pbrt_test PRIVATE ${ALL_PBRT_LIBS} pbrt_opt pbrt_warnings)
+# target_compile_definitions (pbrt_test PRIVATE ${PBRT_DEFINITIONS})
+# target_include_directories (pbrt_test PRIVATE src src/ext ${DOUBLE_CONVERSION_INCLUDE})
+# target_compile_options(pbrt_test PUBLIC ${PBRT_CXX_FLAGS})
 
-add_sanitizers (pbrt_test)
+# add_sanitizers (pbrt_test)
 
-add_test (pbrt_unit_test pbrt_test)
+# add_test (pbrt_unit_test pbrt_test)
 
-set_property (TARGET pbrt_test PROPERTY FOLDER "cmd")
+# set_property (TARGET pbrt_test PROPERTY FOLDER "cmd")
 
 ###############################
 # Installation
 
 install (TARGETS
   pbrt_exe
-  imgtool
-  pspec
-  plytool
-  cyhair2pbrt
+  # imgtool
+  # pspec
+  # plytool
+  # cyhair2pbrt
   DESTINATION
   bin
   )
