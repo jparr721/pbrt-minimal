@@ -174,7 +174,7 @@ void ImageTileIntegrator::Render() {
                 // Render samples in pixel _pPixel_
                 for (int sampleIndex = waveStart; sampleIndex < waveEnd; ++sampleIndex) {
                     threadSampleIndex = sampleIndex;
-                    sampler.StartPixelSample(pPixel, sampleIndex);
+//                    sampler.StartPixelSample(pPixel, sampleIndex);
                     EvaluatePixelSample(pPixel, sampleIndex, sampler, scratchBuffer);
                     scratchBuffer.Reset();
                 }
@@ -220,6 +220,7 @@ void ImageTileIntegrator::Render() {
     if (mseOutFile)
         fclose(mseOutFile);
     DisconnectFromDisplayServer();
+    printf("RENDERING IS DONE");
     LOG_VERBOSE("Rendering finished");
 }
 
@@ -1084,9 +1085,9 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
             // Accumulate contributions from infinite light sources
             for (const auto &light : infiniteLights) {
                 if (SampledSpectrum Le = light.Le(ray, lambda); Le) {
-                    if (depth == 0 || specularBounce)
-                        L += beta * Le / r_u.Average();
-                    else {
+                    if (depth == 0 || specularBounce) {
+                        L = SampledSpectrum(1.0f);
+                    } else {
                         // Add infinite light contribution using both PDFs with MIS
                         Float p_l = lightSampler.PMF(prevIntrContext, light) *
                                     light.PDF_Li(prevIntrContext, ray.d, true);
