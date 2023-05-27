@@ -174,7 +174,7 @@ void ImageTileIntegrator::Render() {
                 // Render samples in pixel _pPixel_
                 for (int sampleIndex = waveStart; sampleIndex < waveEnd; ++sampleIndex) {
                     threadSampleIndex = sampleIndex;
-//                    sampler.StartPixelSample(pPixel, sampleIndex);
+                    sampler.StartPixelSample(pPixel, sampleIndex);
                     EvaluatePixelSample(pPixel, sampleIndex, sampler, scratchBuffer);
                     scratchBuffer.Reset();
                 }
