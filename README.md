@@ -1,10 +1,9 @@
-pbrt, Version 4 (Early Release)
-===============================
+# (Lobotomized) pbrt, Version 4 (Early Release)
 
-[<img src="https://github.com/mmp/pbrt-v4/workflows/cpu-linux-build-and-test/badge.svg">](https://github.com/mmp/pbrt-v4/actions?query=workflow%3Acpu-linux-build-and-test)
-[<img src="https://github.com/mmp/pbrt-v4/workflows/cpu-macos-build-and-test/badge.svg">](https://github.com/mmp/pbrt-v4/actions?query=workflow%3Acpu-macos-build-and-test)
-[<img src="https://github.com/mmp/pbrt-v4/workflows/cpu-windows-build-and-test/badge.svg">](https://github.com/mmp/pbrt-v4/actions?query=workflow%3Acpu-windows-build-and-test)
-[<img src="https://github.com/mmp/pbrt-v4/workflows/gpu-build-only/badge.svg">](https://github.com/mmp/pbrt-v4/actions?query=workflow%3Agpu-build-only)
+## THIS IS A USE-CASE-SPECIFIC PBRT IMPLEMENTATION.
+Specifically, this includes the functionality in the volumetric path tracer to ignore backgrounds and set them to white.
+It also completely removes all other tools and functionality that are not needed for this use case and
+only builds the pbrt executable. This is _grace-compatible_ first, and everything else second.
 
 ![Transparent Machines frame, via @beeple](images/teaser-transparent-machines.png)
 
