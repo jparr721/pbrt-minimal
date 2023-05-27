@@ -1085,8 +1085,12 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
             // Accumulate contributions from infinite light sources
             for (const auto &light : infiniteLights) {
                 if (SampledSpectrum Le = light.Le(ray, lambda); Le) {
-                    if (depth == 0 || specularBounce) {
-                        L = SampledSpectrum(1.0f);
+                    if (depth == 0) {
+                        L = SampledSpectrum(0.0f);
+//                        L += beta * Le / r_u.Average();
+                    } else if (specularBounce) {
+                        L += beta * Le / r_u.Average();
+//                        L = SampledSpectrum(1.0f);
                     } else {
                         // Add infinite light contribution using both PDFs with MIS
                         Float p_l = lightSampler.PMF(prevIntrContext, light) *
@@ -2299,11 +2303,12 @@ SampledSpectrum BDPTIntegrator::Li(RayDifferential ray, SampledWavelengths &lamb
                     // scenes where the camera has a finite aperture, since
                     // we don't have the CameraSample either so just have
                     // to pass (0.5,0.5) in for the lens sample...
-                    pstd::optional<CameraWiSample> cs =
-                        camera.SampleWi(Interaction(ray(100.f), nullptr), Point2f(0.5f, 0.5f), lambda);
+                    pstd::optional<CameraWiSample> cs = camera.SampleWi(
+                        Interaction(ray(100.f), nullptr), Point2f(0.5f, 0.5f), lambda);
                     CHECK_RARE(1e-3, !cs);
                     if (cs)
-                        weightFilms[BufferIndex(s, t)].AddSplat(cs->pRaster, value, lambda);
+                        weightFilms[BufferIndex(s, t)].AddSplat(cs->pRaster, value,
+                                                                lambda);
                 }
             }
             if (t != 1)
