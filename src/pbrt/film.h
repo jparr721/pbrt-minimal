@@ -10,6 +10,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pbrt/pbrt.h>
+#include <iostream>
 
 #include <pbrt/base/bxdf.h>
 #include <pbrt/base/camera.h>
@@ -240,6 +241,9 @@ class RGBFilm : public FilmBase {
                    const VisibleSurface *, Float weight) {
         // Convert sample radiance to _PixelSensor_ RGB
         RGB rgb = sensor->ToSensorRGB(L, lambda);
+        if (L.IsDead()) {
+            rgb = RGB(1., 1., 1.);
+        }
 
         // Optionally clamp sensor RGB value
         Float m = std::max({rgb.r, rgb.g, rgb.b});

@@ -91,6 +91,7 @@ XYZ SpectrumToXYZ(Spectrum s);
 // SampledSpectrum Definition
 class SampledSpectrum {
   public:
+    bool isDeadPixel = false;
     // SampledSpectrum Public Methods
     PBRT_CPU_GPU
     SampledSpectrum operator+(const SampledSpectrum &s) const {
@@ -193,6 +194,15 @@ class SampledSpectrum {
         for (int i = 0; i < NSpectrumSamples; ++i)
             if (IsNaN(values[i]))
                 return true;
+        return false;
+    }
+
+    PBRT_CPU_GPU
+    bool IsDead() const {
+        for (int i = 0; i < NSpectrumSamples; ++i)
+            if (values[i] < 0) {
+                return true;
+            }
         return false;
     }
 

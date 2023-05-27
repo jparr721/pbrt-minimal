@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pbrt/film.h>
+#include <iostream>
 
 #include <pbrt/bsdf.h>
 #include <pbrt/cameras.h>
@@ -499,6 +500,9 @@ void RGBFilm::AddSplat(Point2f p, SampledSpectrum L, const SampledWavelengths &l
     CHECK(!L.HasNaNs());
     // Convert sample radiance to _PixelSensor_ RGB
     RGB rgb = sensor->ToSensorRGB(L, lambda);
+    if (L.IsDead()) {
+        rgb = RGB(1, 1, 1);
+    }
 
     // Optionally clamp sensor RGB value
     Float m = std::max({rgb.r, rgb.g, rgb.b});

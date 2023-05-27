@@ -260,30 +260,32 @@ void RayIntegrator::EvaluatePixelSample(Point2i pPixel, int sampleIndex, Sampler
         L = cameraRay->weight * Li(cameraRay->ray, lambda, sampler, scratchBuffer,
                                    initializeVisibleSurface ? &visibleSurface : nullptr);
 
-        // Issue warning if unexpected radiance value is returned
-        if (L.HasNaNs()) {
-            LOG_ERROR("Not-a-number radiance value returned for pixel (%d, "
-                      "%d), sample %d. Setting to black.",
-                      pPixel.x, pPixel.y, sampleIndex);
-            L = SampledSpectrum(0.f);
-        } else if (IsInf(L.y(lambda))) {
-            LOG_ERROR("Infinite radiance value returned for pixel (%d, %d), "
-                      "sample %d. Setting to black.",
-                      pPixel.x, pPixel.y, sampleIndex);
-            L = SampledSpectrum(0.f);
-        }
 
-        if (cameraRay)
-            PBRT_DBG(
-                "%s\n",
-                StringPrintf("Camera sample: %s -> ray %s -> L = %s, visibleSurface %s",
-                             cameraSample, cameraRay->ray, L,
-                             (visibleSurface ? visibleSurface.ToString() : "(none)"))
-                    .c_str());
-        else
-            PBRT_DBG("%s\n",
-                     StringPrintf("Camera sample: %s -> no ray generated", cameraSample)
-                         .c_str());
+
+        // Issue warning if unexpected radiance value is returned
+//        if (L.HasNaNs()) {
+//            LOG_ERROR("Not-a-number radiance value returned for pixel (%d, "
+//                      "%d), sample %d. Setting to black.",
+//                      pPixel.x, pPixel.y, sampleIndex);
+//            L = SampledSpectrum(0.f);
+//        } else if (IsInf(L.y(lambda))) {
+//            LOG_ERROR("Infinite radiance value returned for pixel (%d, %d), "
+//                      "sample %d. Setting to black.",
+//                      pPixel.x, pPixel.y, sampleIndex);
+//            L = SampledSpectrum(0.f);
+//        }
+
+//        if (cameraRay)
+//            PBRT_DBG(
+//                "%s\n",
+//                StringPrintf("Camera sample: %s -> ray %s -> L = %s, visibleSurface %s",
+//                             cameraSample, cameraRay->ray, L,
+//                             (visibleSurface ? visibleSurface.ToString() : "(none)"))
+//                    .c_str());
+//        else
+//            PBRT_DBG("%s\n",
+//                     StringPrintf("Camera sample: %s -> no ray generated", cameraSample)
+//                         .c_str());
     }
 
     // Add camera ray's contribution to image
@@ -1082,15 +1084,17 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
         // Handle surviving unscattered rays
         // Add emitted light at volume path vertex or from the environment
         if (!si) {
+            L.isDeadPixel = true;
             // Accumulate contributions from infinite light sources
             for (const auto &light : infiniteLights) {
                 if (SampledSpectrum Le = light.Le(ray, lambda); Le) {
-                    if (depth == 0) {
-                        L = SampledSpectrum(0.0f);
+                    if (depth == 0 || specularBounce) {
 //                        L += beta * Le / r_u.Average();
-                    } else if (specularBounce) {
-                        L += beta * Le / r_u.Average();
-//                        L = SampledSpectrum(1.0f);
+                        L = SampledSpectrum(-1.f);
+                        //                        L = SampledSpectrum(0.0f);
+                        //                        L += beta * Le / r_u.Average();
+                        //                        L.isDeadPixel = true;
+                        //                        L = SampledSpectrum(1.0f);
                     } else {
                         // Add infinite light contribution using both PDFs with MIS
                         Float p_l = lightSampler.PMF(prevIntrContext, light) *
@@ -1100,6 +1104,9 @@ SampledSpectrum VolPathIntegrator::Li(RayDifferential ray, SampledWavelengths &l
                     }
                 }
             }
+
+            L.isDeadPixel = true;
+            return L;
 
             break;
         }
